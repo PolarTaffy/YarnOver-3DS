@@ -34,9 +34,6 @@ int main(int argc, char* argv[])
 	while (aptMainLoop())
 	{
 		hidScanInput();
-		gfxFlushBuffers();
-		gfxSwapBuffers();
-		gspWaitForVBlank();
 
 		//Get inputs
 		u32 kDown = hidKeysDown(); //keys that were just pressed
