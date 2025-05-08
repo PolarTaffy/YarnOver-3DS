@@ -15,6 +15,8 @@ C2D_TextBuf home_staticBuffer;
 C2D_Text g_HomeText[3];
 C2D_Text g_MenuText[5];
 enum app_state state;
+float startTextSize = 0.8f;
+bool textIncreasing = true;
 
 void initializeLibraries() {
 	gfxInitDefault();
@@ -22,6 +24,25 @@ void initializeLibraries() {
 	C2D_Init(C2D_DEFAULT_MAX_OBJECTS);
 	C2D_Prepare();
 	state = HOME;
+}
+
+float oscillatingText() {
+	float rate = 0.0045f;
+	if (textIncreasing == true && startTextSize < 1.2f) {
+		return startTextSize + rate;
+	}
+	if (textIncreasing == true && startTextSize >= 1.2f) {
+		textIncreasing = false;
+		return startTextSize - rate;
+	}
+	if (textIncreasing == false && startTextSize <= 0.8f) {
+		textIncreasing = true;
+		return startTextSize + rate;
+	}
+	else {
+		return startTextSize - rate;
+	}
+
 }
 
 int main(int argc, char* argv[])
@@ -56,19 +77,19 @@ int main(int argc, char* argv[])
 				C2D_TextOptimize(&g_HomeText[2]); 
 				
 				//-------------------------------TOP SCREEN (HOME)
-				
 				C2D_TargetClear(top, C2D_Color32(0x68, 0xB0, 0xD8, 0xFF));
 				C2D_SceneBegin(top);
 				//Draw static text strings
-				C2D_DrawText(&g_HomeText[0], 0, 10.5f, 12.0f, 1.0f, 2.0f, 2.0f); //text, flags, x, y, z, scaleX, scaleY
-				C2D_DrawText(&g_HomeText[1], 0, 8.0f, 60.0f + 10.0f, 0.5f, .7f, .7f);
+				C2D_DrawText(&g_HomeText[0], C2D_AlignCenter, TOP_WIDTH / 4, 12.0f, 1.0f, 2.0f, 2.0f); //text, flags, x, y, z, scaleX, scaleY
+				C2D_DrawText(&g_HomeText[1], C2D_AlignCenter, TOP_WIDTH / 4, 60.0f + 10.0f, 0.5f, .7f, .7f);
 
 				//-------------------------------BOTTOM SCREEN (HOME)
 				C2D_TargetClear(bottom, C2D_Color32(0x64, 0xB0, 0xD1, 0xFE));
 				C2D_SceneBegin(bottom);
 				//Draw text strings
-				C2D_DrawText(&g_HomeText[2], 0, BOT_WIDTH/2 - (g_HomeText[2].width / 2), BOT_HEIGHT/2, 0.0f, 0.8f, 0.8f);
-	
+				startTextSize = oscillatingText(); 
+				C2D_DrawText(&g_HomeText[2], C2D_AlignCenter | C2D_AtBaseline, BOT_WIDTH/2, BOT_HEIGHT/2, 0.0f, startTextSize, startTextSize);
+
 
 				
 				if (kDown & KEY_A) {
@@ -89,7 +110,7 @@ int main(int argc, char* argv[])
 				if (kDown & KEY_B) {
 					C2D_TargetClear(top, C2D_Color32(0x02, 0x42, 0xA8, 0xFC));
 					C2D_TargetClear(bottom, C2D_Color32(0x21, 0xB3, 0xD5, 0xFA));
-					state = HOME;
+					state = HOME; //THIS WORKED AND I SPENT HOURS FRUSTRATED FOR NOTHING AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 				}
 
 				break;
