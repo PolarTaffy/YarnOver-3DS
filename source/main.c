@@ -10,13 +10,21 @@ enum app_state {
 	MENU,
 	PROJECT,
 };
+enum app_state state;
 
+//Home Global Variables
 C2D_TextBuf home_staticBuffer;
 C2D_Text g_HomeText[3];
-C2D_Text g_MenuText[5];
-enum app_state state;
 float startTextSize = 0.8f;
 bool textIncreasing = true;
+C2D_Image homeBG;
+C2D_SpriteSheet bgSheet;
+
+//Menu Global Variables
+C2D_Text g_MenuText[5];
+C2D_TextBuf menu_staticBuffer;
+int menuPage = 0;
+
 
 void initializeLibraries() {
 	gfxInitDefault();
@@ -75,10 +83,16 @@ int main(int argc, char* argv[])
 				C2D_TextOptimize(&g_HomeText[0]); 
 				C2D_TextOptimize(&g_HomeText[1]); 
 				C2D_TextOptimize(&g_HomeText[2]); 
+
+				//Load background
+				bgSheet = C2D_SpriteSheetLoad("romfs:/gfx/bg.t3x");	
+				homeBG = C2D_SpriteSheetGetImage(bgSheet, 0);
 				
 				//-------------------------------TOP SCREEN (HOME)
 				C2D_TargetClear(top, C2D_Color32(0x68, 0xB0, 0xD8, 0xFF));
 				C2D_SceneBegin(top);
+
+				C2D_DrawImageAt(homeBG, 100, 30, 0 , 0, 0, 0); //This line is fishy... I only expected to input 4 arguments (and same in the examples), but I needed 7??
 				//Draw static text strings
 				C2D_DrawText(&g_HomeText[0], C2D_AlignCenter, TOP_WIDTH / 4, 12.0f, 1.0f, 2.0f, 2.0f); //text, flags, x, y, z, scaleX, scaleY
 				C2D_DrawText(&g_HomeText[1], C2D_AlignCenter, TOP_WIDTH / 4, 60.0f + 10.0f, 0.5f, .7f, .7f);
@@ -93,24 +107,35 @@ int main(int argc, char* argv[])
 
 				
 				if (kDown & KEY_A) {
-
-					// TODO: WE need to CLEAR the console before moving on to the next thing
-					// C2D_TextBufClear(home_staticBuffer);
-					C2D_TargetClear(top, C2D_Color32(0x68, 0xB0, 0xD8, 0xFF));
-					C2D_TargetClear(bottom, C2D_Color32(0x64, 0xB0, 0xD1, 0xFE));
 					state = MENU;
+					menuPage = 1; //sets it to the first page of menu
 				}
 
 				break;
 			
 			case MENU:
-
+				C2D_TextParse(&g_MenuText[0], menu_staticBuffer, "My Projects");
+				char pagetxt[12];
+				sprintf(pagetxt, "Page %d of 3", menuPage);
+				C2D_TextParse(&g_MenuText[1], menu_staticBuffer, pagetxt);
+				C2D_TextOptimize(&g_MenuText[0]);
+				C2D_TextOptimize(&g_MenuText[1]);
 				
 
+				C2D_TargetClear(bottom, C2D_Color32(0x64, 0xB0, 0xD1, 0xFE));
+				C2D_SceneBegin(bottom);
+				C2D_DrawText(&g_MenuText[0], C2D_AlignCenter, BOT_WIDTH / 4, 30.0f, 0.5f, .7f, .7f);
+				C2D_DrawText(&g_MenuText[1], C2D_AlignCenter, BOT_WIDTH / 4, 50.0f, 0.5f, .7f, .7f);
+
+
+				C2D_TargetClear(top, C2D_Color32(0x68, 0xB0, 0xD8, 0xFF));
+				C2D_SceneBegin(top);
+				
 				if (kDown & KEY_B) {
-					C2D_TargetClear(top, C2D_Color32(0x02, 0x42, 0xA8, 0xFC));
-					C2D_TargetClear(bottom, C2D_Color32(0x21, 0xB3, 0xD5, 0xFA));
+					// C2D_TargetClear(top, C2D_Color32(0x02, 0x42, 0xA8, 0xFC));
+					// C2D_TargetClear(bottom, C2D_Color32(0x21, 0xB3, 0xD5, 0xFA));
 					state = HOME; //THIS WORKED AND I SPENT HOURS FRUSTRATED FOR NOTHING AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+					menuPage = 0;
 				}
 
 				break;
