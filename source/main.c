@@ -17,7 +17,8 @@ struct project {
     bool isCreated;
 };
 
-struct project userProjects[9];
+struct project userProjects[18];
+struct project* curProject;
 
 // void clearScreens() {
 //  consoleSelect(&topScreen);
@@ -37,6 +38,35 @@ void initializeProjects() {
     userProjects[0] = myProj;
 }
 
+void displayMenu(int curPage) {
+	int maxDisplayItems = 9;
+
+	int pgoffset = curPage * maxDisplayItems;
+	for (int i = pgoffset; i < pgoffset + maxDisplayItems; i++) {
+
+	}
+
+
+	//print items
+	for (int i = pgoffset, spot = 0; i < pgoffset + maxDisplayItems; i++, spot +=2) {
+		
+		char prefix[40];
+		sprintf(prefix, "\x1b[%d;4H", spot + 6);
+		if (userProjects[i].isCreated == 0) {
+			strcat(prefix, "Empty Project");
+			printf(prefix);
+		} else {
+			strcat(prefix, userProjects[i].name);
+			printf(prefix);
+		}
+
+	}
+}
+
+void setCurrentProject(int projIndex) {
+	curProject = &userProjects[projIndex];
+}
+
 int main(int argc, char* argv[])
 {
     gfxInitDefault();
@@ -48,6 +78,7 @@ int main(int argc, char* argv[])
 
     int popupTimer = 0;
     int curPage = 0;
+	int selectionIndex = 0;
     
     //Initialize Projects
     initializeProjects();
@@ -92,7 +123,8 @@ int main(int argc, char* argv[])
                     consoleClear();
 
                     popupTimer = 30;
-
+					
+					curPage = 0;
                     state = MENU;
                 }
                 
@@ -104,27 +136,13 @@ int main(int argc, char* argv[])
                     printf("\x1b[4;1HEntered Menu!");
                     popupTimer--;
                 }
-                
-                
+
+
+                displayMenu(curPage);
+
                 printf("\x1b[80;HMenu Page %d!", curPage);
-                
-                for (int i = 0, spot = 0; i < 9; i++, spot +=2) {
-                    
-                    char prefix[40];
-                    sprintf(prefix, "\x1b[%d;1H", spot + 6);
-                    if (userProjects[i].isCreated == 0) {
-                        strcat(prefix, "Empty Project");
-                        printf(prefix);
-                    } else {
-                        strcat(prefix, userProjects[i].name);
-                        printf(prefix);
-                    }
 
-                    
-
-                }
-
-                // printf(userProjects[0].name);
+				
 
                 if (kDown & KEY_A) {
                     consoleSelect(&topScreen);
@@ -133,7 +151,36 @@ int main(int argc, char* argv[])
                     consoleSelect(&bottomScreen);
                     consoleClear();
                     
-                    curPage = 1;
+                    //TODO: Set selectionIndex to current cursor selection
+					//selectionIndex
+					setCurrentProject(selectionIndex);
+                    state = PROJECT;
+                }
+
+				if (kDown & KEY_DRIGHT) {
+                    consoleSelect(&topScreen);
+                    consoleClear();
+
+                    consoleSelect(&bottomScreen);
+                    consoleClear();
+                    
+					if (curPage < 4) {
+						curPage++;
+					}
+
+                    state = MENU;
+                }
+
+				if (kDown & KEY_DLEFT) {
+                    consoleSelect(&topScreen);
+                    consoleClear();
+
+                    consoleSelect(&bottomScreen);
+                    consoleClear();
+                    
+					if (curPage > 0) {
+						curPage--;
+					}
 
                     state = MENU;
                 }
@@ -152,20 +199,24 @@ int main(int argc, char* argv[])
 
                 break;
             
+
             case PROJECT:
+				consoleSelect(&bottomScreen);
                 printf("\x1b[4;HEntered Project Screen!");
+
+				consoleSelect(&topScreen);
+				consoleClear();
+				printf(curProject->name);
+
+
+				
+
                 break;
         }
-
-        
-        //Bottom Screen
-
-        
 
         if (kDown & KEY_START){//if the START button is pressed.
             break; // break in order to return to hbmenu
         } 
-            
         
         kDownOld = kDown;
         kHeldOld = kHeld;
