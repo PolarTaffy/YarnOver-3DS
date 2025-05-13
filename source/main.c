@@ -7,157 +7,186 @@
 
 enum app_state {
 	HOME,
-	MENU,
-	PROJECT,
+    MENU,
+    PROJECT,
 };
-enum app_state state;
 
-//Home Global Variables
-C2D_TextBuf home_staticBuffer;
-C2D_Text g_HomeText[3];
-float startTextSize = 0.8f;
-bool textIncreasing = true;
-C2D_Image homeBG;
-C2D_SpriteSheet bgSheet;
+struct project {
+    char name[20];
+    int row;
+    bool isCreated;
+};
 
-//Menu Global Variables
-C2D_Text g_MenuText[5];
-C2D_TextBuf menu_staticBuffer;
-int menuPage = 0;
+struct project userProjects[9];
 
+// void clearScreens() {
+//  consoleSelect(&topScreen);
+//  consoleClear();
 
-void initializeLibraries() {
-	gfxInitDefault();
-	C3D_Init(C3D_DEFAULT_CMDBUF_SIZE);
-	C2D_Init(C2D_DEFAULT_MAX_OBJECTS);
-	C2D_Prepare();
-	state = HOME;
-}
+//  consoleSelect(&bottomScreen);
+//  consoleClear();
+// }
 
-float oscillatingText() {
-	float rate = 0.0045f;
-	if (textIncreasing == true && startTextSize < 1.2f) {
-		return startTextSize + rate;
-	}
-	if (textIncreasing == true && startTextSize >= 1.2f) {
-		textIncreasing = false;
-		return startTextSize - rate;
-	}
-	if (textIncreasing == false && startTextSize <= 0.8f) {
-		textIncreasing = true;
-		return startTextSize + rate;
-	}
-	else {
-		return startTextSize - rate;
-	}
+void initializeProjects() {
+    //TODO: Actually do this properly, load from a file or something
+    struct project myProj;
+    myProj.row = 5;
+    strcpy(myProj.name, "Sweater");
+    myProj.isCreated = true;
 
+    userProjects[0] = myProj;
 }
 
 int main(int argc, char* argv[])
 {
-	initializeLibraries();
-	C3D_RenderTarget* top = C2D_CreateScreenTarget(GFX_TOP, GFX_LEFT); //Create top screen
-	C3D_RenderTarget* bottom = C2D_CreateScreenTarget(GFX_BOTTOM, GFX_LEFT); //Create bottom screen
-	
-	
-	// Main loop
-	while (aptMainLoop())
-	{
-		hidScanInput();
+    gfxInitDefault();
+    PrintConsole topScreen, bottomScreen;
+    consoleInit(GFX_TOP, &topScreen);
+    consoleInit(GFX_BOTTOM, &bottomScreen);
+    u32 kDownOld = 0, kHeldOld = 0, kUpOld = 0; //In these variables there will be information about keys detected in the previous frame
+    enum app_state state = HOME;
 
-		//Get inputs
-		u32 kDown = hidKeysDown(); //keys that were just pressed
-		u32 kHeld = hidKeysHeld(); //keys that were held
-		u32 kUp = hidKeysUp(); //keys that were just released
-		UNUSED(kHeld);
-		UNUSED(kUp);
-		
-		C3D_FrameBegin(C3D_FRAME_SYNCDRAW);
-		switch (state) {
-			case HOME:
-				// Initialize home screen scene
-				home_staticBuffer = C2D_TextBufNew(4096); 
-				C2D_TextParse(&g_HomeText[0], home_staticBuffer, "YarnOver!");
-				C2D_TextParse(&g_HomeText[1], home_staticBuffer, "Your Pocket Knitting Assistant");
-				C2D_TextParse(&g_HomeText[2], home_staticBuffer, "Press A to start!");
-				C2D_TextOptimize(&g_HomeText[0]); 
-				C2D_TextOptimize(&g_HomeText[1]); 
-				C2D_TextOptimize(&g_HomeText[2]); 
+    int popupTimer = 0;
+    int curPage = 0;
+    
+    //Initialize Projects
+    initializeProjects();
+    
+    printf("\x1b[1;1HYarnOver!");
 
-				//Load background
-				bgSheet = C2D_SpriteSheetLoad("romfs:/gfx/bg.t3x");	
-				homeBG = C2D_SpriteSheetGetImage(bgSheet, 0);
-				
-				//-------------------------------TOP SCREEN (HOME)
-				C2D_TargetClear(top, C2D_Color32(0x68, 0xB0, 0xD8, 0xFF));
-				C2D_SceneBegin(top);
+    // Main loop
+    while (aptMainLoop())
+    {
 
-				C2D_DrawImageAt(homeBG, 100, 30, 0 , 0, 0, 0); //This line is fishy... I only expected to input 4 arguments (and same in the examples), but I needed 7??
-				//Draw static text strings
-				C2D_DrawText(&g_HomeText[0], C2D_AlignCenter, TOP_WIDTH / 4, 12.0f, 1.0f, 2.0f, 2.0f); //text, flags, x, y, z, scaleX, scaleY
-				C2D_DrawText(&g_HomeText[1], C2D_AlignCenter, TOP_WIDTH / 4, 60.0f + 10.0f, 0.5f, .7f, .7f);
+        // Your code goes here
+        u32 kDown = hidKeysDown(); //keys that were just pressed
+        u32 kHeld = hidKeysHeld(); //keys that were held
+        u32 kUp = hidKeysUp(); //keys that were just released
+        //Main Screen?
+        
+        //      ## Cursor Positioning
 
-				//-------------------------------BOTTOM SCREEN (HOME)
-				C2D_TargetClear(bottom, C2D_Color32(0x64, 0xB0, 0xD1, 0xFE));
-				C2D_SceneBegin(bottom);
-				//Draw text strings
-				startTextSize = oscillatingText(); 
-				C2D_DrawText(&g_HomeText[2], C2D_AlignCenter | C2D_AtBaseline, BOT_WIDTH/2, BOT_HEIGHT/2, 0.0f, startTextSize, startTextSize);
+        // - `\x1b[y;xH` is an ANSI escape code where:
+        //   - `\x1b` represents the escape character
+        //   - `y` specifies the row (vertical position)
+        //   - `x` specifies the column (horizontal position)
+        //   - `H` is the command to set cursor position
+        
 
+        switch (state) {
+            case HOME:
+                
+                consoleSelect(&topScreen);
+                printf("\x1b[1;1HYarnOver!");
+                printf("\x1b[2;1HYour personal knitting assistant.");
 
-				
-				if (kDown & KEY_A) {
-					state = MENU;
-					menuPage = 1; //sets it to the first page of menu
-				}
+                consoleSelect(&bottomScreen);
+                printf("\x1b[2;1HPress A to Start!");
+                
 
-				break;
-			
-			case MENU:
-				C2D_TextParse(&g_MenuText[0], menu_staticBuffer, "My Projects");
-				char pagetxt[12];
-				sprintf(pagetxt, "Page %d of 3", menuPage);
-				C2D_TextParse(&g_MenuText[1], menu_staticBuffer, pagetxt);
-				C2D_TextOptimize(&g_MenuText[0]);
-				C2D_TextOptimize(&g_MenuText[1]);
-				
+                if (kDown & KEY_A) {
+                    consoleSelect(&topScreen);
+                    consoleClear();
 
-				C2D_TargetClear(bottom, C2D_Color32(0x64, 0xB0, 0xD1, 0xFE));
-				C2D_SceneBegin(bottom);
-				C2D_DrawText(&g_MenuText[0], C2D_AlignCenter, BOT_WIDTH / 4, 30.0f, 0.5f, .7f, .7f);
-				C2D_DrawText(&g_MenuText[1], C2D_AlignCenter, BOT_WIDTH / 4, 50.0f, 0.5f, .7f, .7f);
+                    consoleSelect(&bottomScreen);
+                    consoleClear();
 
+                    popupTimer = 30;
 
-				C2D_TargetClear(top, C2D_Color32(0x68, 0xB0, 0xD8, 0xFF));
-				C2D_SceneBegin(top);
-				
-				if (kDown & KEY_B) {
-					// C2D_TargetClear(top, C2D_Color32(0x02, 0x42, 0xA8, 0xFC));
-					// C2D_TargetClear(bottom, C2D_Color32(0x21, 0xB3, 0xD5, 0xFA));
-					state = HOME; //THIS WORKED AND I SPENT HOURS FRUSTRATED FOR NOTHING AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
-					menuPage = 0;
-				}
+                    state = MENU;
+                }
+                
+                break;
+            
+            case MENU:
+                consoleSelect(&bottomScreen);
+                if (popupTimer > 0) {
+                    printf("\x1b[4;1HEntered Menu!");
+                    popupTimer--;
+                }
+                
+                
+                printf("\x1b[80;HMenu Page %d!", curPage);
+                
+                for (int i = 0, spot = 0; i < 9; i++, spot +=2) {
+                    
+                    char prefix[40];
+                    sprintf(prefix, "\x1b[%d;1H", spot + 6);
+                    if (userProjects[i].isCreated == 0) {
+                        strcat(prefix, "Empty Project");
+                        printf(prefix);
+                    } else {
+                        strcat(prefix, userProjects[i].name);
+                        printf(prefix);
+                    }
 
-				break;
-			
-			case PROJECT:
-				// printf("\x1b[4;HEntered Project Screen!");
-				break;
-		}
+                    
 
-		C3D_FrameEnd(0);
-		C2D_TextBufDelete(home_staticBuffer); //we delete the buffer to avoid memory leaks
-		home_staticBuffer = NULL;
+                }
 
-		//Exit
-		if (kDown & KEY_START){//if the START button is pressed.
-			break; // break in order to return to hbmenu
-		} 
-		
-	}
+                // printf(userProjects[0].name);
 
-	C2D_Fini();
-	C3D_Fini();
-	gfxExit();
-	return 0;
+                if (kDown & KEY_A) {
+                    consoleSelect(&topScreen);
+                    consoleClear();
+
+                    consoleSelect(&bottomScreen);
+                    consoleClear();
+                    
+                    curPage = 1;
+
+                    state = MENU;
+                }
+
+                if (kDown & KEY_B) {
+                    consoleSelect(&topScreen);
+                    consoleClear();
+
+                    consoleSelect(&bottomScreen);
+                    consoleClear();
+                    
+                    curPage = 0;
+
+                    state = HOME;
+                }
+
+                break;
+            
+            case PROJECT:
+                printf("\x1b[4;HEntered Project Screen!");
+                break;
+        }
+
+        
+        //Bottom Screen
+
+        
+
+        if (kDown & KEY_START){//if the START button is pressed.
+            break; // break in order to return to hbmenu
+        } 
+            
+        
+        kDownOld = kDown;
+        kHeldOld = kHeld;
+        kUpOld = kUp;
+
+        circlePosition pos;
+        //Read the CirclePad position
+        hidCircleRead(&pos);
+        //Print the CirclePad position
+        //printf("\x1b[7;5H%04d; %04d", pos.dx, pos.dy);
+
+        hidScanInput();
+        gfxFlushBuffers();
+        gfxSwapBuffers();
+        gspWaitForVBlank();
+    }
+
+    UNUSED(kHeldOld);
+    UNUSED(kDownOld);
+    UNUSED(kUpOld);
+    C2D_Fini();
+    gfxExit();
+    return 0;
 }
