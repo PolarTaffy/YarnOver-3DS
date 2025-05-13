@@ -19,14 +19,14 @@ struct project {
 
 struct project userProjects[18];
 struct project* curProject;
+PrintConsole topScreen, bottomScreen;
 
-// void clearScreens() {
-//  consoleSelect(&topScreen);
-//  consoleClear();
-
-//  consoleSelect(&bottomScreen);
-//  consoleClear();
-// }
+void clearConsoles() {
+    consoleSelect(&topScreen);
+    consoleClear();
+    consoleSelect(&bottomScreen);
+    consoleClear();
+}
 
 void initializeProjects() {
     //TODO: Actually do this properly, load from a file or something
@@ -40,13 +40,10 @@ void initializeProjects() {
 
 void displayMenu(int curPage) {
 	int maxDisplayItems = 9;
-
 	int pgoffset = curPage * maxDisplayItems;
 	for (int i = pgoffset; i < pgoffset + maxDisplayItems; i++) {
 
 	}
-
-
 	//print items
 	for (int i = pgoffset, spot = 0; i < pgoffset + maxDisplayItems; i++, spot +=2) {
 		
@@ -70,7 +67,7 @@ void setCurrentProject(int projIndex) {
 int main(int argc, char* argv[])
 {
     gfxInitDefault();
-    PrintConsole topScreen, bottomScreen;
+    
     consoleInit(GFX_TOP, &topScreen);
     consoleInit(GFX_BOTTOM, &bottomScreen);
     u32 kDownOld = 0, kHeldOld = 0, kUpOld = 0; //In these variables there will be information about keys detected in the previous frame
@@ -88,46 +85,25 @@ int main(int argc, char* argv[])
     // Main loop
     while (aptMainLoop())
     {
-
-        // Your code goes here
         u32 kDown = hidKeysDown(); //keys that were just pressed
         u32 kHeld = hidKeysHeld(); //keys that were held
         u32 kUp = hidKeysUp(); //keys that were just released
-        //Main Screen?
-        
-        //      ## Cursor Positioning
 
-        // - `\x1b[y;xH` is an ANSI escape code where:
-        //   - `\x1b` represents the escape character
-        //   - `y` specifies the row (vertical position)
-        //   - `x` specifies the column (horizontal position)
-        //   - `H` is the command to set cursor position
-        
-
+        clearConsoles();
         switch (state) {
             case HOME:
-                
                 consoleSelect(&topScreen);
                 printf("\x1b[1;1HYarnOver!");
                 printf("\x1b[2;1HYour personal knitting assistant.");
 
                 consoleSelect(&bottomScreen);
                 printf("\x1b[2;1HPress A to Start!");
-                
 
                 if (kDown & KEY_A) {
-                    consoleSelect(&topScreen);
-                    consoleClear();
-
-                    consoleSelect(&bottomScreen);
-                    consoleClear();
-
-                    popupTimer = 30;
-					
+                    popupTimer = 300;
 					curPage = 0;
                     state = MENU;
                 }
-                
                 break;
             
             case MENU:
@@ -136,64 +112,27 @@ int main(int argc, char* argv[])
                     printf("\x1b[4;1HEntered Menu!");
                     popupTimer--;
                 }
-
-
                 displayMenu(curPage);
 
                 printf("\x1b[80;HMenu Page %d!", curPage);
 
 				
-
+                //TODO: Change these into a switch statement ?
                 if (kDown & KEY_A) {
-                    consoleSelect(&topScreen);
-                    consoleClear();
-
-                    consoleSelect(&bottomScreen);
-                    consoleClear();
-                    
                     //TODO: Set selectionIndex to current cursor selection
-					//selectionIndex
 					setCurrentProject(selectionIndex);
                     state = PROJECT;
                 }
-
 				if (kDown & KEY_DRIGHT) {
-                    consoleSelect(&topScreen);
-                    consoleClear();
-
-                    consoleSelect(&bottomScreen);
-                    consoleClear();
-                    
-					if (curPage < 4) {
-						curPage++;
-					}
-
+					if (curPage < 4) { curPage++;}
                     state = MENU;
                 }
-
 				if (kDown & KEY_DLEFT) {
-                    consoleSelect(&topScreen);
-                    consoleClear();
-
-                    consoleSelect(&bottomScreen);
-                    consoleClear();
-                    
-					if (curPage > 0) {
-						curPage--;
-					}
-
+					if (curPage > 0) {curPage--;}
                     state = MENU;
                 }
-
-                if (kDown & KEY_B) {
-                    consoleSelect(&topScreen);
-                    consoleClear();
-
-                    consoleSelect(&bottomScreen);
-                    consoleClear();
-                    
+                if (kDown & KEY_B) {                    
                     curPage = 0;
-
                     state = HOME;
                 }
 
@@ -205,11 +144,7 @@ int main(int argc, char* argv[])
                 printf("\x1b[4;HEntered Project Screen!");
 
 				consoleSelect(&topScreen);
-				consoleClear();
 				printf(curProject->name);
-
-
-				
 
                 break;
         }
@@ -221,12 +156,6 @@ int main(int argc, char* argv[])
         kDownOld = kDown;
         kHeldOld = kHeld;
         kUpOld = kUp;
-
-        circlePosition pos;
-        //Read the CirclePad position
-        hidCircleRead(&pos);
-        //Print the CirclePad position
-        //printf("\x1b[7;5H%04d; %04d", pos.dx, pos.dy);
 
         hidScanInput();
         gfxFlushBuffers();
