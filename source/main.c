@@ -20,6 +20,8 @@ struct project {
 struct project userProjects[18];
 struct project* curProject;
 PrintConsole topScreen, bottomScreen;
+int maxDisplayItems = 9;
+
 
 void clearConsoles() {
     consoleSelect(&topScreen);
@@ -38,8 +40,7 @@ void initializeProjects() {
     userProjects[0] = myProj;
 }
 
-void displayMenu(int curPage) {
-	int maxDisplayItems = 9;
+void displayMenu(int curPage, int selected) {
 	int pgoffset = curPage * maxDisplayItems;
 	for (int i = pgoffset; i < pgoffset + maxDisplayItems; i++) {
 
@@ -49,13 +50,13 @@ void displayMenu(int curPage) {
 		
 		char prefix[40];
 		sprintf(prefix, "\x1b[%d;4H", spot + 6);
-		if (userProjects[i].isCreated == 0) {
-			strcat(prefix, "Empty Project");
-			printf(prefix);
-		} else {
-			strcat(prefix, userProjects[i].name);
-			printf(prefix);
-		}
+		if (userProjects[i].isCreated == 0) {strcat(prefix, "Empty Project");} 
+        else {strcat(prefix, userProjects[i].name);}
+
+        if (i % maxDisplayItems == selected) {
+            strcat(prefix, "<");
+        }
+        printf(prefix);
 
 	}
 }
@@ -112,17 +113,25 @@ int main(int argc, char* argv[])
                     printf("\x1b[4;1HEntered Menu!");
                     popupTimer--;
                 }
-                displayMenu(curPage);
+                displayMenu(curPage, selectionIndex);
 
                 printf("\x1b[80;HMenu Page %d!", curPage);
 
 				
-                //TODO: Change these into a switch statement ?
+                //Project Selection
+                if (kDown & KEY_DUP && ((selectionIndex % maxDisplayItems) > 0)) {
+                    selectionIndex--;
+                }
+                if (kDown & KEY_DDOWN && ((selectionIndex % maxDisplayItems) < maxDisplayItems - 1)) {
+                    selectionIndex++;
+                }
                 if (kDown & KEY_A) {
                     //TODO: Set selectionIndex to current cursor selection
 					setCurrentProject(selectionIndex);
                     state = PROJECT;
                 }
+
+                //Page Navigation
 				if (kDown & KEY_DRIGHT) {
 					if (curPage < 4) { curPage++;}
                     state = MENU;
@@ -133,6 +142,7 @@ int main(int argc, char* argv[])
                 }
                 if (kDown & KEY_B) {                    
                     curPage = 0;
+                    selectionIndex = 0;
                     state = HOME;
                 }
 
