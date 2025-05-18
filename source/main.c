@@ -42,22 +42,17 @@ void initializeProjects() {
 
 void displayMenu(int curPage, int selected) {
 	int pgoffset = curPage * maxDisplayItems;
-	for (int i = pgoffset; i < pgoffset + maxDisplayItems; i++) {
+    printf("\x1b[6;0H"); //Set Cursor to 6th line
 
-	}
 	//print items
-	for (int i = pgoffset, spot = 0; i < pgoffset + maxDisplayItems; i++, spot +=2) {
-		
-		char prefix[40];
-		sprintf(prefix, "\x1b[%d;4H", spot + 6);
-		if (userProjects[i].isCreated == 0) {strcat(prefix, "Empty Project");} 
-        else {strcat(prefix, userProjects[i].name);}
-
-        if (i % maxDisplayItems == selected) {
-            strcat(prefix, "<");
-        }
-        printf(prefix);
-
+	for (int i = 0; i < maxDisplayItems; i++) {
+		char result[40];
+        sprintf(result, "%d. ", i + pgoffset);
+        if (userProjects[i].isCreated == 0) {strcat(result, "Empty Project");} 
+        else {strcat(result, userProjects[i].name);}
+        if (i % maxDisplayItems == selected) { strcat(result, " <");}
+        printf(result);
+        printf("\n");
 	}
 }
 
