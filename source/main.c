@@ -9,6 +9,7 @@ enum app_state {
 	HOME,
     MENU,
     PROJECT,
+    EDIT,
 };
 
 struct project {
@@ -58,6 +59,21 @@ void displayMenu(int curPage, int selected) {
 
 void setCurrentProject(int projIndex) {
 	curProject = &userProjects[projIndex];
+}
+
+void displayProjectSteps() {
+    int curRow = curProject->row;
+    //get array of pointers to chars containing each line of instruction... or have things actually stored somewhere.
+    char curSteps[] = "SORT ME OUT";
+
+    //display three steps before
+
+    //display current row with an arrow there
+    printf("> %s", curSteps);
+
+    //display five steps after
+    
+
 }
 
 int main(int argc, char* argv[])
@@ -146,12 +162,31 @@ int main(int argc, char* argv[])
 
             case PROJECT:
 				consoleSelect(&bottomScreen);
-                printf("\x1b[4;HEntered Project Screen!");
+                if (popupTimer > 0) {
+                    printf("\x1b[4;1HEntered Project Screen for %s!", curProject->name);
+                    popupTimer--;
+                }
 
 				consoleSelect(&topScreen);
 				printf(curProject->name);
 
+
+                displayProjectSteps();
+
                 break;
+
+
+            case EDIT:
+                //TODO: We need to connect this to a mobile device!! Yippeee!!!
+                //In Python: Make a PDF parser that can convert a PDF pattern into row by row flat text
+                // Django or Flask server
+                // Then it converts all that data into a beautiful QR code which our 3ds will scan
+
+                //or more complicated solution: same yada yada
+                //except instead of a qr code, the 3ds hosts a local server and we tcp data over (not fun :((( )
+
+
+                //we need to handle changing the title here (can be done locally from 3ds)
         }
 
         if (kDown & KEY_START){//if the START button is pressed.
